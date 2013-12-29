@@ -10,7 +10,7 @@ data TypedParam = Param VarName Type
 
 data Term = Var VarName
           | Λ TypedParam Term
-          | Term :@ Term
+          | Apply Term Term -- issue: the first term must be a lambda expression.
           deriving (Show, Eq)
 
 data Context = C0
@@ -27,15 +27,16 @@ replace a b (Var x)
 replace a b (Λ typedParam term)
   | a == term = Λ typedParam b
   | otherwise = Λ typedParam (replace a b term)
-replace a b (t1 :@ t2) = undefined
+replace a b (Apply t1 t2) = Apply (replace a b t1) (replace a b t2)
 
 apply :: Term -> Term -> Term
 apply (Λ (Param pname ptype) body)
-      (Var vname) = replace (Var pname)
-                            (Var vname) body
+      term
+      = replace (Var pname) term body
+apply _ _ = error "first parameter must be a lambda expression"
 
 eval :: Term -> Term
-eval (t1 :@ t2) = apply t1 t2
+eval (Apply t1 t2) = apply t1 t2
 eval t = t
 
 ---
@@ -43,19 +44,29 @@ eval t = t
 main = do
   let int = Type "Int"
   let x = Param "x" int
-  let term1 = Λ x (Var "x")
-  let term2 = Λ x (Var "y")
-  let app1 = term1 :@ (Var "a")
-  let app2 = term2 :@ (Var "a")
+  let f = Param "f" (int :-> int)
+
+  let identity = Λ x (Var "x")
+  let other    = Λ x (Var "y")
 
   let context1 = C0 :<< Param "x" (Type "Int")
                     :<< Param "y" (Type "Int")
-  print int
-  print x
-  print term1
-  print term2
-  print context1
+
+  let fnfn = Λ f
+               (Λ x (Apply (Var "f")
+                           (Apply (Var "f")
+                                  (Var "x"))))
+  print fnfn
+
   print "---"
-  print $ eval term1 -- Λ (Param "x" (Type "Int")) (Var "x")
-  print $ eval app1  -- Var "a"
-  print $ eval app2  -- Var "y"
+  print $ eval identity -- shouldn't change anything
+  print $ eval $
+    Apply identity (Var "a") -- Var "a"
+  print $ eval $
+    Apply other (Var "a") -- other
+  print $ eval $
+    Apply identity other -- other
+  print $ eval $
+    Apply identity other -- other
+  print $ eval $
+    Apply fnfn (Var "a") -- the result of this is meaningless :(
