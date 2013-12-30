@@ -1,3 +1,5 @@
+module Untyped where
+
 data Error = Error String
 
 type VarName = String
@@ -23,8 +25,7 @@ replace a b (Λ param term)
 replace a b (Apply t1 t2) = Apply (replace a b t1) (replace a b t2)
 
 apply :: Monad m => Term -> Term -> m Term
-apply (Λ (Param pname) body)
-      term
+apply (Λ (Param pname) body) term
       = return $ replace (Var pname) term body
 apply a b
       = fail $ "Can't apply " ++ (show a) ++ " to " ++ (show b)
