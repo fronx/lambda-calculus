@@ -1,21 +1,25 @@
+module SimplyTyped where
+
+import Data.List
+
 type VarName  = String
 type TypeName = String
+
+data Error = Error String
 
 data Type = Type TypeName
           | Type :-> Type
           deriving (Show, Eq)
 
-data TypedParam = Param VarName Type
-                deriving (Show, Eq)
+data Param = Param VarName Type
+           deriving (Show, Eq)
 
 data Term = Var VarName
-          | Λ TypedParam Term
-          | Apply Term Term -- issue: the first term must be a lambda expression.
+          | Λ Param Term
+          | Apply Term Term
           deriving (Show, Eq)
 
-data Context = C0
-             | Context :<< TypedParam
-             deriving Show
+type Context = [ (Term, Type) ]
 
 replace :: Term -- old
         -> Term -- new
@@ -24,33 +28,64 @@ replace :: Term -- old
 replace a b (Var x)
   | a == (Var x) = b
   | otherwise    = Var x
-replace a b (Λ typedParam term)
-  | a == term = Λ typedParam b
-  | otherwise = Λ typedParam (replace a b term)
+replace a b (Λ param term)
+  | a == term = Λ param b
+  | otherwise = Λ param (replace a b term)
 replace a b (Apply t1 t2) = Apply (replace a b t1) (replace a b t2)
 
-apply :: Term -> Term -> Term
-apply (Λ (Param pname ptype) body)
-      term
-      = replace (Var pname) term body
-apply _ _ = error "first parameter must be a lambda expression"
+apply :: Term -> Term -> Either String Term
+apply (Λ (Param pname ptype) body) term
+      = Right $ replace (Var pname) term body
+apply a b
+      = Left $ "Can't apply " ++ (show a) ++ " to " ++ (show b)
 
-eval :: Term -> Term
+eval :: Term -> Either String Term
 eval (Apply t1 t2) = apply t1 t2
-eval t = t
+eval t = Right t
+
+evalAndPrint :: Term -> IO ()
+evalAndPrint t =
+  case eval t of
+    Left msg -> putStrLn msg
+    Right t' -> putStrLn (show t')
+
+lookupType :: Term -> Context -> Either String Type
+lookupType term context =
+  case lookup term context of
+    Just _type -> Right _type
+    Nothing    -> Left $ "Type of term " ++ (show term) ++ " unknown at the point of it being queried."
+
+eitherToBool :: Either a b -> Bool
+eitherToBool x =
+  case x of
+    Right _ -> True
+    Left  _ -> False
+
+typeKnown :: Term -> Context -> Bool
+typeKnown = (.) eitherToBool . lookupType
+
+doType :: Context -> Term -> Either String Context
+doType context (Var vname) =
+  case lookupType (Var vname) context of
+    Left msg    -> Left msg
+    Right _type -> Right $ context
+doType context (Λ (Param pname ptype) body) =
+  if typeKnown (Var pname) context
+    then
+      Left $ "Variable names can't be overloaded: " ++ (show ptype)
+    else
+      let context' = (Var pname, ptype) : context
+      in doType context' body
 
 ---
 
 main = do
-  let int = Type "Int"
+  let int = Type "int"
   let x = Param "x" int
-  let f = Param "f" (int :-> int)
+  let f = Param "f" int
 
   let identity = Λ x (Var "x")
   let other    = Λ x (Var "y")
-
-  let context1 = C0 :<< Param "x" (Type "Int")
-                    :<< Param "y" (Type "Int")
 
   let fnfn = Λ f
                (Λ x (Apply (Var "f")
@@ -59,14 +94,15 @@ main = do
   print fnfn
 
   print "---"
-  print $ eval identity -- shouldn't change anything
-  print $ eval $
+  evalAndPrint $
+    identity -- shouldn't change anything
+  evalAndPrint $
     Apply identity (Var "a") -- Var "a"
-  print $ eval $
+  evalAndPrint $
     Apply other (Var "a") -- other
-  print $ eval $
+  evalAndPrint $
     Apply identity other -- other
-  print $ eval $
-    Apply identity other -- other
-  print $ eval $
-    Apply fnfn (Var "a") -- the result of this is meaningless :(
+  evalAndPrint $
+    Apply fnfn (Var "a") -- the result of this is meaningless
+  evalAndPrint $
+    Apply (Var "x") (Var "a") -- error message
