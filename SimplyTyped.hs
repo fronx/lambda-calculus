@@ -74,8 +74,14 @@ doType context (Λ (Param pname ptype) body) =
     then
       Left $ "Variable names can't be overloaded: " ++ (show ptype)
     else
-      let context' = (Var pname, ptype) : context
-      in doType context' body
+      let context' = doType ((Var pname, ptype) : context) body
+          lambdaTerm = (Λ (Param pname ptype) body)
+      in case context' of
+           Left msg       -> Left msg
+           Right _context ->
+             case lookupType body _context of
+               Left msg -> Left msg
+               Right resulttype -> Right $ (lambdaTerm, ptype :-> resulttype) : _context
 
 ---
 
@@ -106,3 +112,7 @@ main = do
     Apply fnfn (Var "a") -- the result of this is meaningless
   evalAndPrint $
     Apply (Var "x") (Var "a") -- error message
+
+  print $ doType [] (Var "x") -- error: x hasn't been declared
+  print $ doType [] identity
+  print $ doType [] other
