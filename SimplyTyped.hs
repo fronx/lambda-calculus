@@ -52,17 +52,32 @@ evalAndPrint t =
 lookupType :: Term -> Context -> Either String Type
 lookupType term context =
   case lookup term context of
+    Nothing    -> Left $ "Type of term " ++ (show term) ++ " unknown."
     Just _type -> Right _type
-    Nothing    -> Left $ "Type of term " ++ (show term) ++ " unknown at the point of it being queried."
+
+-- force!
+lookupType' :: Term -> Context -> Type
+lookupType' term context =
+  case lookupType term context of
+    Left msg    -> error msg
+    Right _type -> _type
 
 eitherToBool :: Either a b -> Bool
 eitherToBool x =
   case x of
-    Right _ -> True
     Left  _ -> False
+    Right _ -> True
 
 typeKnown :: Term -> Context -> Bool
 typeKnown = (.) eitherToBool . lookupType
+
+argType :: Type -> Type
+argType (first :-> rest) = first
+argType t = t
+
+restType :: Type -> Maybe Type
+restType (param :-> rest) = Just rest
+restType _ = Nothing
 
 doType :: Context -> Term -> Either String Context
 doType context (Var vname) =
@@ -79,16 +94,35 @@ doType context (Λ (Param pname ptype) body) =
       in case context' of
            Left msg       -> Left msg
            Right _context ->
-             case lookupType body _context of
-               Left msg -> Left msg
-               Right resulttype -> Right $ (lambdaTerm, ptype :-> resulttype) : _context
+             Right $ (lambdaTerm, ptype :-> resulttype) : _context
+             where resulttype = lookupType' body _context
+doType context (Apply t1 t2) =
+  let contextT1 = doType context t1
+      contextT2 = doType context t2
+  in case contextT1 of
+       Left msg         -> Left msg
+       Right _contextT1 ->
+         case contextT2 of
+           Left msg         -> Left msg
+           Right _contextT2 ->
+             let typeT1 = lookupType' t1 _contextT1
+                 typeT2 = lookupType' t2 _contextT2
+                 argtypeT1 = argType typeT1
+             in if argtypeT1 == typeT2
+                  then
+                    case restType typeT1 of
+                      Nothing -> Left $ "Application not possible. Term " ++ (show t1) ++ " was expected to be a function, but its type is " ++ (show typeT1) ++ "."
+                      Just restTypeT1 ->
+                        Right $ ((Apply t1 t2), restTypeT1) : (t1, typeT1) : (t2, typeT2) : _contextT2
+                  else
+                    Left $ "Incompatible argument. Expected: " ++ (show argtypeT1) ++ " Received: " ++ (show typeT2)
 
 ---
 
 main = do
   let int = Type "int"
   let x = Param "x" int
-  let f = Param "f" int
+  let f = Param "f" (int :-> int)
 
   let identity = Λ x (Var "x")
   let other    = Λ x (Var "y")
@@ -116,3 +150,4 @@ main = do
   print $ doType [] (Var "x") -- error: x hasn't been declared
   print $ doType [] identity
   print $ doType [] other
+  print $ doType [] fnfn
