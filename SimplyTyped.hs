@@ -31,10 +31,7 @@ eval (Apply t1 t2) = apply t1 t2
 eval t = Right t
 
 evalAndPrint :: Term -> IO ()
-evalAndPrint t =
-  case eval t of
-    Left msg -> putStrLn msg
-    Right t' -> putStrLn (show t')
+evalAndPrint t = mapEither putStrLn (eval t)
 
 ---
 
