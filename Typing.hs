@@ -44,7 +44,7 @@ doType :: Context -> Term -> Either String Context
 doType context (Var vname) =
   ifRight
     (lookupType (Var vname) context)
-    (\x -> Right context)
+    (\_ -> Right context)
 doType context (Λ (Param pname ptype) body) =
   if typeKnown (Var pname) context
     then
