@@ -33,8 +33,8 @@ ifRight2 x y fn =
 fail :: String -> Either String b
 fail msg = Left msg
 
-mapEither :: (Show a, Show b) => (String -> c) -> Either a b -> c
-mapEither f x =
+eitherToString :: (Show a, Show b) => Either a b -> String
+eitherToString x =
   case x of
-    Left  l -> f (show l)
-    Right r -> f (show r)
+    Left  l -> show l
+    Right r -> show r

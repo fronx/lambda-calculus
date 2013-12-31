@@ -31,7 +31,7 @@ eval (Apply t1 t2) = apply t1 t2
 eval t = Right t
 
 evalAndPrint :: Term -> IO ()
-evalAndPrint t = mapEither putStrLn (eval t)
+evalAndPrint = putStrLn . eitherToString . eval
 
 ---
 
