@@ -1,5 +1,6 @@
 module Typing where
 
+import Prelude hiding (fail)
 import Types
 import Ether
 
@@ -41,18 +42,18 @@ restType _ = Nothing
 
 doType :: Context -> Term -> Either String Context
 doType context (Var vname) =
-  case lookupType (Var vname) context of
-    Left msg    -> Left msg
-    Right _type -> Right $ context
+  ifRight
+    (lookupType (Var vname) context)
+    (\x -> Right context)
 doType context (Λ (Param pname ptype) body) =
   if typeKnown (Var pname) context
     then
-      Left $ failDoTypeVar (Param pname ptype)
+      fail $ failDoTypeVar (Param pname ptype)
     else
       let context' = doType ((Var pname, ptype) : context) body
           lambdaTerm = (Λ (Param pname ptype) body)
       in case context' of
-        Left msg       -> Left msg
+        Left msg -> fail msg
         Right _context ->
           Right $ (lambdaTerm, ptype :-> resulttype) : _context
           where resulttype = lookupType' body _context
@@ -66,12 +67,12 @@ doType context (Apply term1 term2) =
           argtypeT1 = argType typeT1
       in if argtypeT1 /= typeT2
         then
-          Left $ failDoTypeApplyBadArg term2 argtypeT1 typeT2
+          fail $ failDoTypeApplyBadArg term2 argtypeT1 typeT2
         else
           case restType typeT1 of
-            Nothing -> Left $ failDoTypeApplyT1Fn term1 typeT1
-            Just restTypeT1 -> Right $
-                ((Apply term1 term2), restTypeT1)
-              : (term1, typeT1)
-              : (term2, typeT2)
-              : conT2)
+            Nothing -> fail $ failDoTypeApplyT1Fn term1 typeT1
+            Just restTypeT1 ->
+              Right $ ((Apply term1 term2), restTypeT1)
+                    : (term1, typeT1)
+                    : (term2, typeT2)
+                    : conT2)

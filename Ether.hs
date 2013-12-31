@@ -18,14 +18,17 @@ eitherToBool x =
     Left  _ -> False
     Right _ -> True
 
-ifRight :: Either a b -> (b -> Either a b) -> Either a b
+ifRight :: Either a b -> (b -> Either a c) -> Either a c
 ifRight x fn =
   case x of
     Left  l -> Left l
     Right r -> fn r
 
-ifRight2 :: Either a b -> Either a b -> (b -> b -> Either a b) -> Either a b
+ifRight2 :: Either a b -> Either a b -> (b -> b -> Either a c) -> Either a c
 ifRight2 x y fn =
   ifRight x (\x' ->
     ifRight y (\y' ->
       fn x' y'))
+
+fail :: String -> Either String b
+fail msg = Left msg
