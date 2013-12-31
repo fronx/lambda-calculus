@@ -55,7 +55,8 @@ doType context (Λ (Param pname ptype) body) =
       in case context' of
         Left msg -> fail msg
         Right _context ->
-          Right $ (lambdaTerm, ptype :-> resulttype) : _context
+          Right $ (lambdaTerm, ptype :-> resulttype)
+                : _context
           where resulttype = lookupType' body _context
 doType context (Apply term1 term2) =
   ifRight2
