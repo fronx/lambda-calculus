@@ -21,10 +21,10 @@ failApply :: Term -> Term -> String
 failApply a b = "Can't apply " ++ (show a) ++ " to " ++ (show b)
 
 apply :: Term -> Term -> Either String Term
-apply (Λ (Param pname ptype) body) term
-      = Right $ replace (Var pname) term body
-apply a b
-      = Left $ failApply a b
+apply (Λ (Param pname ptype) body) term =
+  Right $ replace (Var pname) term body
+apply a b =
+  Left $ failApply a b
 
 eval :: Term -> Either String Term
 eval (Apply t1 t2) = apply t1 t2
