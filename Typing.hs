@@ -73,6 +73,4 @@ doType context (Apply term1 term2) =
             Nothing -> fail $ failDoTypeApplyT1Fn term1 typeT1
             Just restTypeT1 ->
               Right $ ((Apply term1 term2), restTypeT1)
-                    : (term1, typeT1)
-                    : (term2, typeT2)
                     : conT2)
