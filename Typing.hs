@@ -52,10 +52,10 @@ doType context (Λ (Param pname ptype) body) =
       let context' = doType ((Var pname, ptype) : context) body
           lambdaTerm = (Λ (Param pname ptype) body)
       in case context' of
-           Left msg       -> Left msg
-           Right _context ->
-             Right $ (lambdaTerm, ptype :-> resulttype) : _context
-             where resulttype = lookupType' body _context
+        Left msg       -> Left msg
+        Right _context ->
+          Right $ (lambdaTerm, ptype :-> resulttype) : _context
+          where resulttype = lookupType' body _context
 doType context (Apply term1 term2) =
   ifRight2
     (doType context term1)
@@ -65,13 +65,13 @@ doType context (Apply term1 term2) =
           typeT2 = lookupType' term2 conT2
           argtypeT1 = argType typeT1
       in if argtypeT1 /= typeT2
-           then
-             Left $ failDoTypeApplyBadArg term2 argtypeT1 typeT2
-           else
-             case restType typeT1 of
-               Nothing -> Left $ failDoTypeApplyT1Fn term1 typeT1
-               Just restTypeT1 -> Right $
-                   ((Apply term1 term2), restTypeT1)
-                 : (term1, typeT1)
-                 : (term2, typeT2)
-                 : conT2)
+        then
+          Left $ failDoTypeApplyBadArg term2 argtypeT1 typeT2
+        else
+          case restType typeT1 of
+            Nothing -> Left $ failDoTypeApplyT1Fn term1 typeT1
+            Just restTypeT1 -> Right $
+                ((Apply term1 term2), restTypeT1)
+              : (term1, typeT1)
+              : (term2, typeT2)
+              : conT2)
