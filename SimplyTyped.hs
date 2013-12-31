@@ -131,15 +131,17 @@ doType context (Apply t1 t2) =
              let typeT1 = lookupType' t1 _contextT1
                  typeT2 = lookupType' t2 _contextT2
                  argtypeT1 = argType typeT1
-             in if argtypeT1 == typeT2
+             in if argtypeT1 /= typeT2
                   then
-                    case restType typeT1 of
-                      Nothing ->
-                        Left $ failDoTypeApplyT1Fn t1 typeT1
-                      Just restTypeT1 ->
-                        Right $ ((Apply t1 t2), restTypeT1) : (t1, typeT1) : (t2, typeT2) : _contextT2
-                  else
                     Left $ failDoTypeApplyBadArg t2 argtypeT1 typeT2
+                  else
+                    case restType typeT1 of
+                      Nothing -> Left $ failDoTypeApplyT1Fn t1 typeT1
+                      Just restTypeT1 -> Right $
+                          ((Apply t1 t2), restTypeT1)
+                        : (t1, typeT1)
+                        : (t2, typeT2)
+                        : _contextT2
 
 ---
 
