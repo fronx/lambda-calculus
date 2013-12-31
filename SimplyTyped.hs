@@ -31,7 +31,16 @@ eval (Apply t1 t2) = apply t1 t2
 eval t = Right t
 
 evalAndPrint :: Term -> IO ()
-evalAndPrint = putStrLn . eitherToString . eval
+evalAndPrint term =
+  case eval term of
+    Left msg    -> putStrLn msg
+    Right term' -> print term'
+
+printEither :: Show b => Either String b -> IO ()
+printEither x =
+  case x of
+    Left msg -> putStrLn msg
+    Right x' -> print x'
 
 ---
 
@@ -63,7 +72,9 @@ main = do
   evalAndPrint $
     Apply (Var "x") (Var "a") -- error message
 
-  print $ doType [] (Var "x") -- error: x hasn't been declared
-  print $ doType [] identity
-  print $ doType [] other
-  print $ doType [] fnfn
+  printEither $ doType [] (Var "x") -- error: x hasn't been declared
+  printEither $ doType [] identity
+  printEither $ doType [] other
+  printEither $ doType [] fnfn
+  printEither $ doType [] (Apply fnfn (Λ (Param "a" (Type "foo")) (Var "a"))) -- error
+  printEither $ doType [] (Apply fnfn (Λ (Param "a" (Type "int")) (Var "a"))) -- error
