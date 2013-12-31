@@ -1,5 +1,7 @@
 module Types where
 
+import Data.List (intercalate)
+
 type VarName  = String
 type TypeName = String
 
@@ -17,4 +19,12 @@ data Term = Var VarName
           | Apply Term Term
           deriving (Show, Eq)
 
-type Context = [ (Term, Type) ]
+data Context = Context [ (Term, Type) ]
+
+emptyContext = Context []
+
+contextPush :: Context -> (Term, Type) -> Context
+contextPush (Context items) item = Context (item : items)
+
+instance Show Context where
+  show (Context items) = "\n[\n    " ++ intercalate "\n\n    " (map (\(a, b) -> (show a) ++ " :: \n    " ++ show b) items) ++ "\n]\n"

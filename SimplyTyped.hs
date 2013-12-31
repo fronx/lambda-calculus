@@ -72,9 +72,10 @@ main = do
   evalAndPrint $
     Apply (Var "x") (Var "a") -- error message
 
-  printEither $ doType [] (Var "x") -- error: x hasn't been declared
-  printEither $ doType [] identity
-  printEither $ doType [] other
-  printEither $ doType [] fnfn
-  printEither $ doType [] (Apply fnfn (Λ (Param "a" (Type "foo")) (Var "a"))) -- error
-  printEither $ doType [] (Apply fnfn (Λ (Param "a" (Type "int")) (Var "a"))) -- error
+  printEither $ doType emptyContext (Var "x") -- error: x hasn't been declared
+  printEither $ doType emptyContext identity
+  printEither $ doType emptyContext other
+  printEither $ doType emptyContext fnfn
+  printEither $ doType emptyContext (Apply fnfn (Var "a")) -- error
+  printEither $ doType emptyContext (Apply fnfn (Λ (Param "a" (Type "foo")) (Var "a"))) -- error
+  printEither $ doType emptyContext (Apply fnfn (Λ (Param "a" (Type "int")) (Var "a"))) -- error

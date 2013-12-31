@@ -22,8 +22,8 @@ failDoTypeApplyBadArg term texpected tactual =
   " Received: " ++ (show tactual)
 
 lookupType :: Term -> Context -> Either String Type
-lookupType term context =
-  maybeToEither (lookup term context) (failLookupType term)
+lookupType term (Context items) =
+  maybeToEither (lookup term items) (failLookupType term)
 
 -- force!
 lookupType' :: Term -> Context -> Type
@@ -50,13 +50,12 @@ doType context (Λ (Param pname ptype) body) =
     then
       fail $ failDoTypeVar (Param pname ptype)
     else
-      let context' = doType ((Var pname, ptype) : context) body
+      let context' = doType (contextPush context (Var pname, ptype)) body
           lambdaTerm = (Λ (Param pname ptype) body)
       in case context' of
         Left msg -> fail msg
         Right _context ->
-          Right $ (lambdaTerm, ptype :-> resulttype)
-                : _context
+          Right $ contextPush _context (lambdaTerm, ptype :-> resulttype)
           where resulttype = lookupType' body _context
 doType context (Apply term1 term2) =
   ifRight2
@@ -73,5 +72,4 @@ doType context (Apply term1 term2) =
           case restType typeT1 of
             Nothing -> fail $ failDoTypeApplyT1Fn term1 typeT1
             Just restTypeT1 ->
-              Right $ ((Apply term1 term2), restTypeT1)
-                    : conT2)
+              Right $ contextPush conT2 ((Apply term1 term2), restTypeT1))
