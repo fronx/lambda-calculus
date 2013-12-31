@@ -33,11 +33,14 @@ replace a b (Λ param term)
   | otherwise = Λ param (replace a b term)
 replace a b (Apply t1 t2) = Apply (replace a b t1) (replace a b t2)
 
+failApply :: Term -> Term -> String
+failApply a b = "Can't apply " ++ (show a) ++ " to " ++ (show b)
+
 apply :: Term -> Term -> Either String Term
 apply (Λ (Param pname ptype) body) term
       = Right $ replace (Var pname) term body
 apply a b
-      = Left $ "Can't apply " ++ (show a) ++ " to " ++ (show b)
+      = Left $ failApply a b
 
 eval :: Term -> Either String Term
 eval (Apply t1 t2) = apply t1 t2
@@ -49,18 +52,24 @@ evalAndPrint t =
     Left msg -> putStrLn msg
     Right t' -> putStrLn (show t')
 
+failLookupType :: Term -> String
+failLookupType term = "Type of term " ++ (show term) ++ " unknown."
+
 lookupType :: Term -> Context -> Either String Type
 lookupType term context =
   case lookup term context of
-    Nothing    -> Left $ "Type of term " ++ (show term) ++ " unknown."
+    Nothing    -> Left $ failLookupType term
     Just _type -> Right _type
+
+forceRight :: Either String b -> b
+forceRight x =
+  case x of
+    Left msg -> error msg
+    Right x' -> x'
 
 -- force!
 lookupType' :: Term -> Context -> Type
-lookupType' term context =
-  case lookupType term context of
-    Left msg    -> error msg
-    Right _type -> _type
+lookupType' = (.) forceRight . lookupType
 
 eitherToBool :: Either a b -> Bool
 eitherToBool x =
@@ -79,6 +88,20 @@ restType :: Type -> Maybe Type
 restType (param :-> rest) = Just rest
 restType _ = Nothing
 
+failDoTypeVar :: Param -> String
+failDoTypeVar param = "Variable names can't be overloaded: " ++ (show param)
+
+failDoTypeApplyT1Fn :: Term -> Type -> String
+failDoTypeApplyT1Fn term typ =
+  "Application not possible. Term " ++ (show term) ++
+  " was expected to be a function, but its type is " ++ (show typ) ++ "."
+
+failDoTypeApplyBadArg :: Term -> Type -> Type -> String
+failDoTypeApplyBadArg term texpected tactual =
+  "Incompatible argument: " ++ (show term) ++
+  " Expected: " ++ (show texpected) ++
+  " Received: " ++ (show tactual)
+
 doType :: Context -> Term -> Either String Context
 doType context (Var vname) =
   case lookupType (Var vname) context of
@@ -87,7 +110,7 @@ doType context (Var vname) =
 doType context (Λ (Param pname ptype) body) =
   if typeKnown (Var pname) context
     then
-      Left $ "Variable names can't be overloaded: " ++ (show ptype)
+      Left $ failDoTypeVar (Param pname ptype)
     else
       let context' = doType ((Var pname, ptype) : context) body
           lambdaTerm = (Λ (Param pname ptype) body)
@@ -111,11 +134,12 @@ doType context (Apply t1 t2) =
              in if argtypeT1 == typeT2
                   then
                     case restType typeT1 of
-                      Nothing -> Left $ "Application not possible. Term " ++ (show t1) ++ " was expected to be a function, but its type is " ++ (show typeT1) ++ "."
+                      Nothing ->
+                        Left $ failDoTypeApplyT1Fn t1 typeT1
                       Just restTypeT1 ->
                         Right $ ((Apply t1 t2), restTypeT1) : (t1, typeT1) : (t2, typeT2) : _contextT2
                   else
-                    Left $ "Incompatible argument. Expected: " ++ (show argtypeT1) ++ " Received: " ++ (show typeT2)
+                    Left $ failDoTypeApplyBadArg t2 argtypeT1 typeT2
 
 ---
 
