@@ -1,6 +1,7 @@
 module SimplyTyped where
 
 import Data.List
+import Ether
 
 type VarName  = String
 type TypeName = String
@@ -57,25 +58,11 @@ failLookupType term = "Type of term " ++ (show term) ++ " unknown."
 
 lookupType :: Term -> Context -> Either String Type
 lookupType term context =
-  case lookup term context of
-    Nothing    -> Left $ failLookupType term
-    Just _type -> Right _type
-
-forceRight :: Either String b -> b
-forceRight x =
-  case x of
-    Left msg -> error msg
-    Right x' -> x'
+  maybeToEither (lookup term context) (failLookupType term)
 
 -- force!
 lookupType' :: Term -> Context -> Type
 lookupType' = (.) forceRight . lookupType
-
-eitherToBool :: Either a b -> Bool
-eitherToBool x =
-  case x of
-    Left  _ -> False
-    Right _ -> True
 
 typeKnown :: Term -> Context -> Bool
 typeKnown = (.) eitherToBool . lookupType
@@ -119,29 +106,25 @@ doType context (Λ (Param pname ptype) body) =
            Right _context ->
              Right $ (lambdaTerm, ptype :-> resulttype) : _context
              where resulttype = lookupType' body _context
-doType context (Apply t1 t2) =
-  let contextT1 = doType context t1
-      contextT2 = doType context t2
-  in case contextT1 of
-       Left msg         -> Left msg
-       Right _contextT1 ->
-         case contextT2 of
-           Left msg         -> Left msg
-           Right _contextT2 ->
-             let typeT1 = lookupType' t1 _contextT1
-                 typeT2 = lookupType' t2 _contextT2
-                 argtypeT1 = argType typeT1
-             in if argtypeT1 /= typeT2
-                  then
-                    Left $ failDoTypeApplyBadArg t2 argtypeT1 typeT2
-                  else
-                    case restType typeT1 of
-                      Nothing -> Left $ failDoTypeApplyT1Fn t1 typeT1
-                      Just restTypeT1 -> Right $
-                          ((Apply t1 t2), restTypeT1)
-                        : (t1, typeT1)
-                        : (t2, typeT2)
-                        : _contextT2
+doType context (Apply term1 term2) =
+  ifRight2
+    (doType context term1)
+    (doType context term2)
+    (\conT1 conT2 ->
+      let typeT1 = lookupType' term1 conT1
+          typeT2 = lookupType' term2 conT2
+          argtypeT1 = argType typeT1
+      in if argtypeT1 /= typeT2
+           then
+             Left $ failDoTypeApplyBadArg term2 argtypeT1 typeT2
+           else
+             case restType typeT1 of
+               Nothing -> Left $ failDoTypeApplyT1Fn term1 typeT1
+               Just restTypeT1 -> Right $
+                   ((Apply term1 term2), restTypeT1)
+                 : (term1, typeT1)
+                 : (term2, typeT2)
+                 : conT2)
 
 ---
 
