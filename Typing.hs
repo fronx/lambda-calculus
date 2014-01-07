@@ -65,11 +65,11 @@ doType context (Apply term1 term2) =
       let typeT1 = lookupType' term1 conT1
           typeT2 = lookupType' term2 conT2
           argtypeT1 = argType typeT1
-      in if argtypeT1 /= typeT2
-        then
-          fail $ failDoTypeApplyBadArg term2 argtypeT1 typeT2
-        else
-          case restType typeT1 of
-            Nothing -> fail $ failDoTypeApplyT1Fn term1 typeT1
-            Just restTypeT1 ->
-              Right $ contextPush conT2 ((Apply term1 term2), restTypeT1))
+      in case restType typeT1 of
+        Nothing -> fail $ failDoTypeApplyT1Fn term1 typeT1
+        Just restTypeT1 ->
+          if argtypeT1 /= typeT2
+          then
+            fail $ failDoTypeApplyBadArg term2 argtypeT1 typeT2
+          else
+            Right $ contextPush conT2 ((Apply term1 term2), restTypeT1))
