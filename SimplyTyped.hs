@@ -34,7 +34,6 @@ run term = (context, term')
       TypeErrorContext _ -> term
       _ -> eval term
 
----
 
 main = do
   let int = Type "int"
