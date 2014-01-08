@@ -2,7 +2,6 @@ module SimplyTyped where
 
 import Data.List
 import Types
-import Ether
 import Typing
 
 replace :: Term -- old
@@ -72,10 +71,10 @@ main = do
   evalAndPrint $
     Apply (Var "x") (Var "a") -- error message
 
-  printEither $ doType emptyContext (Var "x") -- error: x hasn't been declared
-  printEither $ doType emptyContext identity
-  printEither $ doType emptyContext other
-  printEither $ doType emptyContext fnfn
-  printEither $ doType emptyContext (Apply fnfn (Var "a")) -- error
-  printEither $ doType emptyContext (Apply fnfn (Λ (Param "a" (Type "foo")) (Var "a"))) -- error
-  printEither $ doType emptyContext (Apply fnfn (Λ (Param "a" (Type "int")) (Var "a"))) -- error
+  print $ doType emptyContext (Var "x") -- error: x hasn't been declared
+  print $ doType emptyContext identity
+  print $ doType emptyContext other
+  print $ doType emptyContext fnfn
+  print $ doType emptyContext (Apply fnfn (Var "a")) -- error
+  print $ doType emptyContext (Apply fnfn (Λ (Param "a" (Type "foo")) (Var "a"))) -- error
+  print $ doType emptyContext (Apply fnfn (Λ (Param "a" (Type "int")) (Var "a"))) -- error
