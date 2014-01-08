@@ -41,7 +41,7 @@ main = do
   let identity = Λ (Param "x") (Var "x")
   let other    = Λ (Param "x") (Var "y")
 
-  let fnfn = Λ (Param "f") (Λ (Param "x") ((Var "f") :@ (Var "f") :@ (Var "x")))
+  let fnfn = Λ (Param "f") (Λ (Param "x") ((Var "f") :@ ((Var "f") :@ (Var "x"))))
 
   let cons = Λ (Param "a")
                (Λ (Param "b")

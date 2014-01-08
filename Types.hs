@@ -44,7 +44,7 @@ data Param = Param VarName Type
 
 data Term = Var VarName
           | Λ Param Term
-          | Apply Term Term
+          | Term :@ Term
           deriving (Show, Eq)
 
 -- TODO use a map instead

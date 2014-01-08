@@ -40,10 +40,10 @@ doType context (Λ (Param pname ptype) body) =
   where
     term = (Λ (Param pname ptype) body)
     var = Var pname
-doType context (Apply term1 term2) =
+doType context (term1 :@ term2) =
   contextPush context' (term, typ)
   where
-    term     = (Apply term1 term2)
+    term     = term1 :@ term2
     context' = doType (doType context term1) term2
     typeT1   = lookupType' term1 context'
     typeT2   = lookupType' term2 context'
