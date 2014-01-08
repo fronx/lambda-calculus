@@ -39,6 +39,14 @@ run term = (context, term')
       TypeErrorContext _ -> term
       _ -> eval term
 
+runWithContext :: Show lineId => (lineId, Term) -> IO ()
+runWithContext (lineId, term) =
+  putStr $
+    "\n\n-- " ++ (show lineId) ++ ": " ++ (show term) ++ "\n\n" ++
+    (show term') ++ "\n" ++
+    (show context)
+  where (context, term') = run term
+
 ------- LIB -------
 int = Type TInt
 
@@ -74,10 +82,3 @@ main = do
     , ( 9, fnfn :@ (Λ (Param "a" int) (Var "a"))) -- error
     , (10, intHead :@ (intCons :@ (VInt 3) :@ (VInt 2)))
     ]
-  where
-    runWithContext (lineNum, term) =
-      putStr $
-        "\n\n-- " ++ (show lineNum) ++ ": " ++ (show term) ++ "\n\n" ++
-        (show term') ++ "\n" ++
-        (show context)
-      where (context, term') = run term
