@@ -16,30 +16,24 @@ replace a b (Λ param term)
   | otherwise = Λ param (replace a b term)
 replace a b (Apply t1 t2) = Apply (replace a b t1) (replace a b t2)
 
-failApply :: Term -> Term -> String
-failApply a b = "Can't apply " ++ (show a) ++ " to " ++ (show b)
-
-apply :: Term -> Term -> Either String Term
+apply :: Term -> Term -> Term
 apply (Λ (Param pname ptype) body) term =
-  Right $ replace (Var pname) term body
-apply a b =
-  Left $ failApply a b
+  replace (Var pname) term body
+apply a b = error $ "Can't apply " ++ (show a) ++ " to " ++ (show b)
 
-eval :: Term -> Either String Term
+eval :: Term -> Term
 eval (Apply t1 t2) = apply t1 t2
-eval t = Right t
+--eval (Λ param body) = undefined -- TODO
+eval t = t
 
-evalAndPrint :: Term -> IO ()
-evalAndPrint term =
-  case eval term of
-    Left msg    -> putStrLn msg
-    Right term' -> print term'
-
-printEither :: Show b => Either String b -> IO ()
-printEither x =
-  case x of
-    Left msg -> putStrLn msg
-    Right x' -> print x'
+run :: Term -> (Context, Term)
+run term =
+  (context, term')
+  where
+    context = doType emptyContext term
+    term'   = case context of
+      TypeErrorContext _ -> term
+      _ -> eval term
 
 ---
 
@@ -57,32 +51,21 @@ main = do
                                   (Var "x"))))
   print fnfn
 
-  print "---"
-  evalAndPrint $
-    identity -- shouldn't change anything
-  evalAndPrint $
-    Apply identity (Var "a") -- Var "a"
-  evalAndPrint $
-    Apply other (Var "a") -- other
-  evalAndPrint $
-    Apply identity other -- other
-  evalAndPrint $
-    Apply fnfn (Var "a") -- the result of this is meaningless
-  evalAndPrint $
-    Apply (Var "x") (Var "a") -- error message
-
-  mapM runContext
-    [ (1, (Var "x")) -- error: x hasn't been declared
+  mapM runWithContext
+    [ (1, Var "x") -- error: x hasn't been declared
     , (2, identity)
-    , (3, other)
-    , (4, fnfn)
-    , (5, (Apply fnfn (Var "a"))) -- error
-    , (6, (Apply fnfn (Λ (Param "a" (Type "foo")) (Var "a")))) -- error
-    , (7, (Apply identity (Var "a"))) -- error
-    , (8, (Apply fnfn (Λ (Param "a" (Type "int")) (Var "a")))) -- error
+    , (3, Λ (Param "y" int) (Apply identity (Var "y")))
+    , (4, other)
+    , (5, fnfn)
+    , (6, Apply fnfn (Var "a")) -- error
+    , (7, Apply fnfn (Λ (Param "a" (Type "foo")) (Var "a"))) -- error
+    , (8, Apply identity (Var "a")) -- error
+    , (9, Apply fnfn (Λ (Param "a" (Type "int")) (Var "a"))) -- error
     ]
   where
-    runContext (lineNum, term) =
+    runWithContext (lineNum, term) =
       putStr $
         "\n\n-- " ++ (show lineNum) ++ ": " ++ (show term) ++ "\n\n" ++
-        (show (doType emptyContext term))
+        (show term') ++ "\n" ++
+        (show context)
+      where (context, term') = run term
