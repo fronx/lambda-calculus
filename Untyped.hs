@@ -24,23 +24,19 @@ replace a b (Λ param term)
   | otherwise = Λ param (replace a b term)
 replace a b (Apply t1 t2) = Apply (replace a b t1) (replace a b t2)
 
-apply :: Term -> Term -> Either String Term
-apply (Λ (Param pname) body) term
-      = Right $ replace (Var pname) term body
-apply a b
-      = Left $ "Can't apply " ++ (show a) ++ " to " ++ (show b)
+apply :: Term -> Term -> Term
+apply (Λ (Param pname) body) term =
+  replace (Var pname) term body
+apply a b = error $ "Can't apply " ++ (show a) ++ " to " ++ (show b)
 
-eval :: Term -> Either String Term
+eval :: Term -> Term
 eval (Apply t1 t2) = apply t1 t2
-eval t = Right t
+eval (Λ param body) = Λ param (eval body) -- FIXME
+eval t = t
 
-evalAndPrint :: Term -> IO ()
-evalAndPrint t =
-  case eval t of
-    Left msg -> putStrLn msg
-    Right t' -> putStrLn (show t')
+run :: Term -> IO ()
+run t = print (eval t)
 
----
 
 main = do
   let x = Param "x"
@@ -55,16 +51,12 @@ main = do
                                   (Var "x"))))
   print fnfn
 
-  print "---"
-  evalAndPrint $
-    identity -- shouldn't change anything
-  evalAndPrint $
-    Apply identity (Var "a") -- Var "a"
-  evalAndPrint $
-    Apply other (Var "a") -- other
-  evalAndPrint $
-    Apply identity other -- other
-  evalAndPrint $
-    Apply fnfn (Var "a") -- the result of this is meaningless
-  evalAndPrint $
-    Apply (Var "x") (Var "a") -- error message
+  mapM run
+    [ identity                 -- shouldn't change anything
+    , Apply identity (Var "a") -- Var "a"
+    , Apply other (Var "a")    -- other
+    , Apply identity other     -- other
+    , Apply fnfn (Var "a")     -- the result of this is meaningless
+    , Λ (Param "y") (Apply identity (Var "y"))
+    , fnfn -- FIXME
+    ]
