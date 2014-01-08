@@ -69,7 +69,7 @@ isTypeError (_, _) = False
 
 instance Show Context where
   show (Context items) =
-    "\n[\n    " ++
+    "[\n    " ++
     intercalate "\n\n    " (map showTermType items) ++
     "\n]\n"
     where showTermType (term, typ) = (show term) ++ " :: \n    " ++ (show typ)

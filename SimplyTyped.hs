@@ -71,10 +71,18 @@ main = do
   evalAndPrint $
     Apply (Var "x") (Var "a") -- error message
 
-  print $ doType emptyContext (Var "x") -- error: x hasn't been declared
-  print $ doType emptyContext identity
-  print $ doType emptyContext other
-  print $ doType emptyContext fnfn
-  print $ doType emptyContext (Apply fnfn (Var "a")) -- error
-  print $ doType emptyContext (Apply fnfn (Λ (Param "a" (Type "foo")) (Var "a"))) -- error
-  print $ doType emptyContext (Apply fnfn (Λ (Param "a" (Type "int")) (Var "a"))) -- error
+  mapM runContext
+    [ (1, (Var "x")) -- error: x hasn't been declared
+    , (2, identity)
+    , (3, other)
+    , (4, fnfn)
+    , (5, (Apply fnfn (Var "a"))) -- error
+    , (6, (Apply fnfn (Λ (Param "a" (Type "foo")) (Var "a")))) -- error
+    , (7, (Apply identity (Var "a"))) -- error
+    , (8, (Apply fnfn (Λ (Param "a" (Type "int")) (Var "a")))) -- error
+    ]
+  where
+    runContext (lineNum, term) =
+      putStr $
+        "\n\n-- " ++ (show lineNum) ++ ": " ++ (show term) ++ "\n\n" ++
+        (show (doType emptyContext term))

@@ -32,9 +32,9 @@ doType context (Λ (Param pname ptype) body) =
         terror   = FailDoTypeVar (Param pname ptype)
         terror'  = FailDueToPreviousTypeError term terror
     Nothing -> -- param uses a fresh name
-      contextPush context' (term, ptype :-> resulttype)
+      contextPush context' (term, typ)
       where
-        resulttype = lookupType' body context''
+        typ        = ptype :-> lookupType' body context''
         context''  = doType context' body
         context'   = contextPush context (var, ptype)
   where
@@ -54,8 +54,7 @@ doType context (Apply term1 term2) =
         case typeT2 of
           TypeError terror -> TypeError (FailDueToPreviousTypeError term terror)
           typ2 ->
-            if a /= typ2
-            then
+            if a /= typ2 then
               TypeError (FailDoTypeApplyBadArg term2 a typ2)
             else
               b
