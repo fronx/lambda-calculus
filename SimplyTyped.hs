@@ -1,6 +1,5 @@
 module SimplyTyped where
 
-import Data.List
 import Types
 import Typing
 

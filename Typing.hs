@@ -1,8 +1,7 @@
 module Typing where
 
-import Prelude hiding (fail)
 import Types
-import Data.Maybe (isJust, fromJust)
+import Data.Maybe (fromJust)
 
 lookupType :: Term -> Context -> Maybe Type
 lookupType term (Context items)          = lookup term items
