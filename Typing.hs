@@ -18,6 +18,10 @@ lookupTypeOrTypeError term context =
     Just typ' -> typ'
 
 doType :: Context -> Term -> Context
+doType context (VInt i) =
+  contextPush context (VInt i, Type TInt)
+doType context (VBool b) =
+  contextPush context (VBool b, Type TBool)
 doType context (Var vname) =
   contextPush context (term, typ)
   where
@@ -34,7 +38,9 @@ doType context (Λ (Param pname ptype) body) =
     Nothing -> -- param uses a fresh name
       contextPush context' (term, typ)
       where
-        typ        = ptype :-> lookupType' body context''
+        typ        = case lookupType' body context'' of
+                       TypeError terror -> TypeError $ FailDueToPreviousTypeError body terror
+                       resultType       -> ptype :-> resultType
         context''  = doType context' body
         context'   = contextPush context (var, ptype)
   where

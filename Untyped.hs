@@ -1,5 +1,7 @@
 module Untyped where
 
+import Prelude hiding (head)
+
 data Error = Error String
 type VarName = String
 
@@ -42,34 +44,27 @@ eval t = t
 run :: (Int, Term) -> IO ()
 run (n, t) = putStrLn $ (show n) ++ ": " ++ (show (eval t))
 
+------- LIB -------
+identity = Λ (Param "x") (Var "x")
+constant = Λ (Param "x") (Var "y")
+
+fnfn = Λ (Param "f")
+        (Λ (Param "x")
+          ((Var "f") :@ ((Var "f") :@ (Var "x"))))
+
+cons = Λ (Param "a")
+        (Λ (Param "b")
+          (Λ (Param "f")
+            ((Var "f") :@ (Var "a") :@ (Var "b"))))
+
+first  = Λ (Param "a") (Λ (Param "b") (Var "a"))
+second = Λ (Param "a") (Λ (Param "b") (Var "b"))
+
+head = Λ (Param "c") (Var "c" :@ first)
+tail = Λ (Param "c") (Var "c" :@ second)
+------- /LIB -------
 
 main = do
-  let identity = Λ (Param "x") (Var "x")
-  let constant = Λ (Param "x") (Var "y")
-
-  let fnfn = Λ (Param "f")
-              (Λ (Param "x")
-                ((Var "f") :@ ((Var "f") :@ (Var "x"))))
-
-  let cons = Λ (Param "a")
-               (Λ (Param "b")
-                 (Λ (Param "f")
-                   ((Var "f") :@ (Var "a") :@ (Var "b"))))
-
-  let first = Λ (Param "a")
-                (Λ (Param "b")
-                  (Var "a"))
-
-  let second = Λ (Param "a")
-                 (Λ (Param "b")
-                   (Var "b"))
-
-  let head = Λ (Param "c")
-               (Var "c" :@ first)
-
-  let tail = Λ (Param "c")
-               (Var "c" :@ second)
-
   mapM run
     [ ( 1, identity)              -- shouldn't change anything
     , ( 2, identity :@ (Var "a")) -- Var "a"

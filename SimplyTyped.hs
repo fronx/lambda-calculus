@@ -15,6 +15,7 @@ replace a b (Λ param term)
   | a == term = Λ param b
   | otherwise = Λ param (replace a b term)
 replace a b (t1 :@ t2) = (replace a b t1) :@ (replace a b t2)
+replace a b t = t
 
 apply :: Term -> Term -> Term
 apply (Λ (Param pname ptype) body) term =
@@ -38,29 +39,40 @@ run term = (context, term')
       TypeErrorContext _ -> term
       _ -> eval term
 
+------- LIB -------
+int = Type TInt
+
+intIdentity = Λ (Param "x" int) (Var "x")
+intConstant = Λ (Param "x" int) (Var "y")
+
+intCons = Λ (Param "a" int)
+           (Λ (Param "b" int)
+             (Λ (Param "f" (int :-> int :-> int))
+               ((Var "f") :@ (Var "a") :@ (Var "b"))))
+
+intFirst  = Λ (Param "a" int) (Λ (Param "b" int) (Var "a"))
+intSecond = Λ (Param "a" int) (Λ (Param "b" int) (Var "b"))
+
+intHead = Λ (Param "c" ((int :-> int :-> int) :-> int)) (Var "c" :@ intFirst)
+intTail = Λ (Param "c" ((int :-> int :-> int) :-> int)) (Var "c" :@ intSecond)
+------- /LIB -------
 
 main = do
-  let int = Type "int"
-  let f = Param "f" (int :-> int)
-
-  let identity = Λ (Param "x" int) (Var "x")
-  let other    = Λ (Param "x" int) (Var "y")
-
   let fnfn = Λ (Param "f" (int :-> int))
                (Λ (Param "x" int)
                  ((Var "f") :@ ((Var "f") :@ (Var "x"))))
-  print fnfn
 
   mapM runWithContext
-    [ (1, Var "x") -- error: x hasn't been declared
-    , (2, identity)
-    , (3, Λ (Param "y" int) (identity :@ (Var "y")))
-    , (4, other)
-    , (5, fnfn)
-    , (6, fnfn :@ (Var "a")) -- error
-    , (7, fnfn :@ (Λ (Param "a" (Type "foo")) (Var "a"))) -- error
-    , (8, identity :@ (Var "a")) -- error
-    , (9, fnfn :@ (Λ (Param "a" (Type "int")) (Var "a"))) -- error
+    [ ( 1, Var "x") -- error: x hasn't been declared
+    , ( 2, intIdentity)
+    , ( 3, Λ (Param "y" int) (intIdentity :@ (Var "y")))
+    , ( 4, intConstant)
+    , ( 5, fnfn)
+    , ( 6, fnfn :@ (Var "a")) -- error
+    , ( 7, fnfn :@ (Λ (Param "a" (Type TBool)) (Var "a"))) -- error
+    , ( 8, intIdentity :@ (Var "a")) -- error
+    , ( 9, fnfn :@ (Λ (Param "a" int) (Var "a"))) -- error
+    , (10, intHead :@ (intCons :@ (VInt 3) :@ (VInt 2)))
     ]
   where
     runWithContext (lineNum, term) =

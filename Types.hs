@@ -3,7 +3,9 @@ module Types where
 import Data.List (intercalate, nub)
 
 type VarName  = String
-type TypeName = String
+data TypeId = TInt
+            | TBool
+            deriving (Show, Eq)
 
 data Error = Error String
 
@@ -32,12 +34,14 @@ instance Show TypeError where
     "  Received: " ++ (show tactual)
   show (FailDueToPreviousTypeError term terror) =
     "Term " ++ (show term) ++
-    " can't be typed due to a previous type error: " ++ (show terror)
+    " can't be typed due to a previous type error:\n    " ++ (show terror)
 
-data Type = Type TypeName
+data Type = Type TypeId
           | Type :-> Type
           | TypeError TypeError
           deriving (Show, Eq)
+
+infixr 5 :-> -- right-associative
 
 data Param = Param VarName Type
            deriving (Show, Eq)
@@ -45,6 +49,8 @@ data Param = Param VarName Type
 data Term = Var VarName
           | Λ Param Term
           | Term :@ Term
+          | VInt Int
+          | VBool Bool
           deriving (Show, Eq)
 
 -- TODO use a map instead
@@ -68,11 +74,14 @@ isTypeError (_, TypeError te) = True
 isTypeError (_, _) = False
 
 instance Show Context where
-  show (Context items) =
-    "[\n    " ++
-    intercalate "\n\n    " (map showTermType items) ++
-    "\n]\n"
-    where showTermType (term, typ) = (show term) ++ " :: \n    " ++ (show typ)
+  show (Context items) = showContextItems items
   show (TypeErrorContext items) =
-    concat (map showType (filter isTypeError (reverse items)))
+    showContextItems items ++
+      concat (map showType (filter isTypeError (reverse items)))
     where showType (term, typ) = (show typ) ++ "\n"
+
+showContextItems items =
+  "[\n    " ++
+  intercalate "\n\n    " (map showTermType items) ++
+  "\n]\n"
+  where showTermType (term, typ) = (show term) ++ " :: \n    " ++ (show typ)
