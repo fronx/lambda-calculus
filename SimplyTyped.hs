@@ -19,11 +19,15 @@ replace a b (t1 :@ t2) = (replace a b t1) :@ (replace a b t2)
 apply :: Term -> Term -> Term
 apply (Λ (Param pname ptype) body) term =
   replace (Var pname) term body
+apply (t1 :@ t2) t3 =
+  apply (apply t1 t2) t3
 apply a b = error $ "Can't apply " ++ (show a) ++ " to " ++ (show b)
 
 eval :: Term -> Term
-eval (t1 :@ t2) = apply t1 t2
---eval (Λ param body) = undefined -- TODO
+eval (t1 :@ t2) =
+  case apply t1 t2 of
+    (t1' :@ t2') -> eval (t1' :@ t2')
+    t -> t
 eval t = t
 
 run :: Term -> (Context, Term)
