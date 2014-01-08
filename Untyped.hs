@@ -9,7 +9,7 @@ data Param = Param VarName
 
 data Term = Var VarName
           | Λ Param Term
-          | Apply Term Term
+          | Term :@ Term
           deriving (Show, Eq)
 
 replace :: Term -- old
@@ -22,7 +22,7 @@ replace a b (Var x)
 replace a b (Λ param term)
   | a == term = Λ param b
   | otherwise = Λ param (replace a b term)
-replace a b (Apply t1 t2) = Apply (replace a b t1) (replace a b t2)
+replace a b (t1 :@ t2) = (replace a b t1) :@ (replace a b t2)
 
 apply :: Term -> Term -> Term
 apply (Λ (Param pname) body) term =
@@ -30,8 +30,7 @@ apply (Λ (Param pname) body) term =
 apply a b = error $ "Can't apply " ++ (show a) ++ " to " ++ (show b)
 
 eval :: Term -> Term
-eval (Apply t1 t2) = apply t1 t2
-eval (Λ param body) = Λ param (eval body) -- FIXME
+eval (t1 :@ t2) = apply t1 t2
 eval t = t
 
 run :: Term -> IO ()
@@ -39,24 +38,22 @@ run t = print (eval t)
 
 
 main = do
-  let x = Param "x"
-  let f = Param "f"
+  let identity = Λ (Param "x") (Var "x")
+  let other    = Λ (Param "x") (Var "y")
 
-  let identity = Λ x (Var "x")
-  let other    = Λ x (Var "y")
+  let fnfn = Λ (Param "f") (Λ (Param "x") ((Var "f") :@ (Var "f") :@ (Var "x")))
 
-  let fnfn = Λ f
-               (Λ x (Apply (Var "f")
-                           (Apply (Var "f")
-                                  (Var "x"))))
-  print fnfn
+  let cons = Λ (Param "a")
+               (Λ (Param "b")
+                 (Λ (Param "f")
+                   ((Var "f") :@ (Var "a") :@ (Var "b"))))
 
   mapM run
-    [ identity                 -- shouldn't change anything
-    , Apply identity (Var "a") -- Var "a"
-    , Apply other (Var "a")    -- other
-    , Apply identity other     -- other
-    , Apply fnfn (Var "a")     -- the result of this is meaningless
-    , Λ (Param "y") (Apply identity (Var "y"))
-    , fnfn -- FIXME
+    [ identity              -- shouldn't change anything
+    , identity :@ (Var "a") -- Var "a"
+    , other :@ (Var "a")    -- other
+    , identity :@ other     -- other
+    , fnfn :@ (Var "a")     -- the result of this is meaningless
+    , Λ (Param "y") (identity :@ (Var "y"))
+    , fnfn
     ]
