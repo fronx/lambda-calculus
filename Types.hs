@@ -47,6 +47,7 @@ data Term = Var VarName
           | Apply Term Term
           deriving (Show, Eq)
 
+-- TODO use a map instead
 data Context = Context [ (Term, Type) ]
              | TypeErrorContext [ (Term, Type) ]
 

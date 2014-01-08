@@ -11,32 +11,42 @@ lookupType term (TypeErrorContext items) = lookup term items
 lookupType' :: Term -> Context -> Type
 lookupType' = (.) fromJust . lookupType
 
+lookupTypeOrTypeError :: Term -> Context -> Type
+lookupTypeOrTypeError term context =
+  case lookupType term context of
+    Nothing   -> TypeError (FailLookupType term)
+    Just typ' -> typ'
+
 doType :: Context -> Term -> Context
 doType context (Var vname) =
   contextPush context (term, typ)
-  where term = Var vname
-        typ = case lookupType term context of
-                Nothing   -> TypeError (FailLookupType term)
-                Just typ' -> typ'
+  where
+    term = Var vname
+    typ  = lookupTypeOrTypeError term context
 doType context (Λ (Param pname ptype) body) =
-  case lookupType (Var pname) context of
-    Just typ ->
-      let context' = contextPush context (Var pname, TypeError terror)
-          terror = FailDoTypeVar (Param pname ptype)
-          term = (Λ (Param pname ptype) body)
-      in contextPush context' (term, TypeError (FailDueToPreviousTypeError term terror))
-    Nothing ->
-      let context' = doType (contextPush context (Var pname, ptype)) body
-          lambdaTerm = (Λ (Param pname ptype) body)
-          resulttype = lookupType' body context'
-      in contextPush context' (lambdaTerm, ptype :-> resulttype)
+  case lookupType var context of
+    Just typ -> -- param overloads existing var
+      contextPush context' (term, TypeError terror')
+      where
+        context' = contextPush context (var, TypeError terror)
+        terror   = FailDoTypeVar (Param pname ptype)
+        terror'  = FailDueToPreviousTypeError term terror
+    Nothing -> -- param uses a fresh name
+      contextPush context' (term, ptype :-> resulttype)
+      where
+        resulttype = lookupType' body context''
+        context''  = doType context' body
+        context'   = contextPush context (var, ptype)
+  where
+    term = (Λ (Param pname ptype) body)
+    var = Var pname
 doType context (Apply term1 term2) =
   contextPush context' (term, typ)
   where
+    term     = (Apply term1 term2)
     context' = doType (doType context term1) term2
-    typeT1 = lookupType' term1 context'
-    typeT2 = lookupType' term2 context'
-    term   = (Apply term1 term2)
+    typeT1   = lookupType' term1 context'
+    typeT2   = lookupType' term2 context'
     typ = case typeT1 of
       TypeError terror ->
         TypeError (FailDueToPreviousTypeError term terror)
