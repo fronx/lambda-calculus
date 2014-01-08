@@ -1,5 +1,3 @@
-{-# LANGUAGE FlexibleInstances #-}
-
 module Types where
 
 import Data.List (intercalate, nub)
@@ -36,7 +34,6 @@ instance Show TypeError where
     "Term " ++ (show term) ++
     " can't be typed due to a previous type error: " ++ (show terror)
 
-
 data Type = Type TypeName
           | Type :-> Type
           | TypeError TypeError
@@ -65,18 +62,16 @@ contextPush (Context items) (term, TypeError terror) =
 contextPush (Context items) (term, typ) =
   Context $ nub ((term, typ) : items)
 
-
 isTypeError :: (Term, Type) -> Bool
 isTypeError (_, TypeError te) = True
 isTypeError (_, _) = False
-
-showTermType (term, typ) = (show term) ++ " :: \n    " ++ (show typ)
 
 instance Show Context where
   show (Context items) =
     "\n[\n    " ++
     intercalate "\n\n    " (map showTermType items) ++
     "\n]\n"
+    where showTermType (term, typ) = (show term) ++ " :: \n    " ++ (show typ)
   show (TypeErrorContext items) =
     concat (map showType (filter isTypeError (reverse items)))
     where showType (term, typ) = (show typ) ++ "\n"
