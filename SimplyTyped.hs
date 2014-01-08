@@ -27,8 +27,7 @@ eval (Apply t1 t2) = apply t1 t2
 eval t = t
 
 run :: Term -> (Context, Term)
-run term =
-  (context, term')
+run term = (context, term')
   where
     context = doType emptyContext term
     term'   = case context of
