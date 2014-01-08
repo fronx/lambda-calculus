@@ -80,8 +80,10 @@ instance Show Context where
       concat (map showType (filter isTypeError (reverse items)))
     where showType (term, typ) = (show typ) ++ "\n"
 
+showTermType (term, typ) =
+  (show term) ++ " :: \n    " ++ (show typ)
+
 showContextItems items =
   "[\n    " ++
   intercalate "\n\n    " (map showTermType items) ++
   "\n]\n"
-  where showTermType (term, typ) = (show term) ++ " :: \n    " ++ (show typ)

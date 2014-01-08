@@ -32,20 +32,26 @@ eval (t1 :@ t2) =
 eval t = t
 
 run :: Term -> (Context, Term)
-run term = (context, term')
+run term = (doType emptyContext term', term')
   where
     context = doType emptyContext term
     term'   = case context of
-      TypeErrorContext _ -> term
-      _ -> eval term
+                TypeErrorContext _ -> term
+                _ -> eval term
 
 runWithContext :: Show lineId => (lineId, Term) -> IO ()
 runWithContext (lineId, term) =
-  putStr $
-    "\n\n-- " ++ (show lineId) ++ ": " ++ (show term) ++ "\n\n" ++
-    (show term') ++ "\n" ++
-    (show context)
-  where (context, term') = run term
+  let (context, term') = run term
+      typ = lookupType term' context
+  in
+    putStr $
+      "\n\n-- " ++ (show lineId) ++ ": " ++ (show term) ++ "\n\n" ++
+      case typ of
+        Nothing -> "Couldn't be typed: " ++ (show term')
+        Just (TypeError terror) -> "Couldn't be typed: "
+        Just typ' ->  showTermType (term', typ')
+      ++ "\n" ++
+      (show context)
 
 ------- LIB -------
 int = Type TInt
@@ -78,7 +84,7 @@ main = do
     , ( 5, fnfn)
     , ( 6, fnfn :@ (Var "a")) -- error
     , ( 7, fnfn :@ (Λ (Param "a" (Type TBool)) (Var "a"))) -- error
-    , ( 8, intIdentity :@ (Var "a")) -- error
-    , ( 9, fnfn :@ (Λ (Param "a" int) (Var "a"))) -- error
+    , ( 8, intIdentity :@ (VInt 4))
+    , ( 9, fnfn :@ (Λ (Param "a" int) (Var "a")))
     , (10, intHead :@ (intCons :@ (VInt 3) :@ (VInt 2)))
     ]

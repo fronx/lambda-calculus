@@ -28,24 +28,14 @@ doType context (Var vname) =
     term = Var vname
     typ  = lookupTypeOrTypeError term context
 doType context (Λ (Param pname ptype) body) =
-  case lookupType var context of
-    Just typ -> -- param overloads existing var
-      contextPush context' (term, TypeError terror')
-      where
-        context' = contextPush context (var, TypeError terror)
-        terror   = FailDoTypeVar (Param pname ptype)
-        terror'  = FailDueToPreviousTypeError term terror
-    Nothing -> -- param uses a fresh name
-      contextPush context' (term, typ)
-      where
-        typ        = case lookupType' body context'' of
-                       TypeError terror -> TypeError $ FailDueToPreviousTypeError body terror
-                       resultType       -> ptype :-> resultType
-        context''  = doType context' body
-        context'   = contextPush context (var, ptype)
+  contextPush context' (term, typ)
   where
-    term = (Λ (Param pname ptype) body)
-    var = Var pname
+    term = Λ (Param pname ptype) body
+    typ = case lookupType' body context'' of
+            TypeError terror -> TypeError $ FailDueToPreviousTypeError body terror
+            resultType       -> ptype :-> resultType
+    context''  = doType context' body
+    context'   = contextPush context ((Var pname), ptype)
 doType context (term1 :@ term2) =
   contextPush context' (term, typ)
   where
