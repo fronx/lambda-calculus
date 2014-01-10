@@ -18,7 +18,7 @@ genTermVar,
   genTermAtom :: Gen Term
 
 genTermVar    = liftM Var genVarname
-genTermLambda = liftM2 Λ genParam arbitrary
+genTermLambda = liftM2 Λ arbitrary arbitrary
 genTermApp    = liftM2 (:@) arbitrary arbitrary
 genTermAtom   = liftM Atom arbitrary
 
