@@ -22,13 +22,12 @@ genTermLambda = liftM2 Λ genParam arbitrary
 genTermApp    = liftM2 (:@) arbitrary arbitrary
 genTermAtom   = liftM Atom arbitrary
 
-genTerm = do
-  n <- choose (0, 3) :: Gen Int
-  case n of
-    0 -> genTermVar
-    1 -> genTermLambda
-    2 -> genTermApp
-    3 -> genTermAtom
+genTerm = oneof
+  [ genTermVar
+  , genTermLambda
+  , genTermApp
+  , genTermAtom
+  ]
 
 instance Arbitrary Param where
   arbitrary = genParam
@@ -36,14 +35,16 @@ instance Arbitrary Param where
 instance Arbitrary Term where
   arbitrary = genTerm
 
-prop_evalIdentity :: Term -> Bool
-prop_evalIdentity term =
+prop_evalIdentity :: Term -> Property
+prop_evalIdentity term = property $
   evalSmallStep (identity :@ term) == term
 
-prop_evalConstant :: Term -> Bool
-prop_evalConstant term =
+prop_evalConstant :: Term -> Property
+prop_evalConstant term = property $
   evalSmallStep (constant :@ term) == Var "y"
 
 main = do
-  quickCheck prop_evalIdentity
-  quickCheck prop_evalConstant
+  mapM quickCheck -- verboseCheck
+    [ prop_evalIdentity
+    , prop_evalConstant
+    ]
