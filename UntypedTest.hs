@@ -43,14 +43,13 @@ prop_evalConstant :: Term -> Property
 prop_evalConstant term = property $
   evalSmallStep (constant :@ term) == Var "y"
 
-isLambdaAbstraction :: Term -> Bool
-isLambdaAbstraction (Λ _ _ ) = True
-isLambdaAbstraction _ = False
-
 prop_dontEvalLambdas :: Term -> Property
-prop_dontEvalLambdas term =
-  (isLambdaAbstraction term) ==>
-    eval term == term
+prop_dontEvalLambdas term = forAll genTermLambda $
+  \term -> eval term == term
+
+prop_evalApplications :: Term -> Property
+prop_evalApplications term = forAll genTermApp $
+  \term -> eval term == term
 
 main = do
   mapM quickCheck -- verboseCheck
