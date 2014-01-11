@@ -9,6 +9,7 @@ singleCharStrings chars =
 
 genVarname :: Gen String
 genVarname = elements $ singleCharStrings "abcdef"
+
 genParam :: Gen Param
 genParam = liftM Param genVarname
 

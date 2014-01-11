@@ -23,12 +23,14 @@ apply (t1 :@ t2) t3 =
   apply (apply t1 t2) t3
 apply a b = error $ "Can't apply " ++ (show a) ++ " to " ++ (show b)
 
+evalSmallStep :: Term -> Term
+evalSmallStep (t1 :@ t2) = apply t1 t2
+evalSmallStep t = t
+
 eval :: Term -> Term
-eval (t1 :@ t2) =
-  case apply t1 t2 of
-    (t1' :@ t2') -> eval (t1' :@ t2')
-    t -> t
-eval t = t
+eval t = case evalSmallStep t of
+  (t1' :@ t2') -> evalSmallStep (t1' :@ t2')
+  t -> t
 
 run :: Term -> (Context, Term)
 run term = (doType emptyContext term', term')
@@ -51,6 +53,12 @@ runWithContext (lineId, term) =
         Just typ' ->  showTermType (term', typ')
       ++ "\n" ++
       (show context)
+
+isWellTyped :: Term -> Bool
+isWellTyped term =
+  case doType emptyContext term of
+    TypeErrorContext _ -> False
+    _ -> True
 
 ------- LIB -------
 int = Type TInt
