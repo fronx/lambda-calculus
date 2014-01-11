@@ -65,6 +65,3 @@ main = do
     , prop_WellTypedCanBeEvaluated
     , prop_dontEvalLambdas
     ]
-    --, prop_evalConstant
-    --, prop_dontEvalLambdas
-    --]
