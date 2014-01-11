@@ -12,6 +12,7 @@ data Term = Var VarName
           | Λ Param Term
           | Term :@ Term
           | Atom Int
+          | InvalidTerm String
           deriving (Show, Eq)
 
 replace :: Term -- old
@@ -26,13 +27,14 @@ replace a b (Λ param term)
   | a == term = Λ param b
   | otherwise = Λ param (replace a b term)
 replace a b (t1 :@ t2) = (replace a b t1) :@ (replace a b t2)
+replace a b (InvalidTerm msg) = InvalidTerm msg
 
 apply :: Term -> Term -> Term
 apply (Λ (Param pname) body) term =
   replace (Var pname) term body
 apply (t1 :@ t2) t3 =
   apply (apply t1 t2) t3
-apply a b = error $ "Can't apply " ++ (show a) ++ " to " ++ (show b)
+apply a b = InvalidTerm $ "Can't apply " ++ (show a) ++ " to " ++ (show b)
 
 evalSmallStep :: Term -> Term
 evalSmallStep (t1 :@ t2) = apply t1 t2
