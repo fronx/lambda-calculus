@@ -47,10 +47,6 @@ prop_dontEvalLambdas :: Term -> Property
 prop_dontEvalLambdas term = forAll genTermLambda $
   \term -> eval term == term
 
-prop_evalApplications :: Term -> Property
-prop_evalApplications term = forAll genTermApp $
-  \term -> eval term == term
-
 main = do
   mapM quickCheck -- verboseCheck
     [ prop_evalIdentity
