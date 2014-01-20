@@ -55,3 +55,14 @@ doType context (term1 :@ term2) =
               b
       notAFunctionType ->
         TypeError (FailDoTypeApplyT1Fn term1 typeT1)
+
+isWellTyped :: Term -> Bool
+isWellTyped term =
+  case doType emptyContext term of
+    TypeErrorContext _ -> False
+    _ -> True
+
+computeType :: Term -> Type
+computeType term =
+  lookupType' term context
+  where context = doType emptyContext term

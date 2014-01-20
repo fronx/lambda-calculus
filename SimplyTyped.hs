@@ -54,12 +54,6 @@ runWithContext (lineId, term) =
       ++ "\n" ++
       (show context)
 
-isWellTyped :: Term -> Bool
-isWellTyped term =
-  case doType emptyContext term of
-    TypeErrorContext _ -> False
-    _ -> True
-
 ------- LIB -------
 int = Type TInt
 

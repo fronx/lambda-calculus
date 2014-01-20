@@ -2,6 +2,7 @@ module SimplyTypedTest where
 
 import SimplyTyped hiding (main)
 import Types
+import Typing
 import Test.QuickCheck
 import Control.Monad (liftM, liftM2)
 
@@ -14,14 +15,26 @@ genVarname = elements $ singleCharStrings "abcdef"
 genTypeId :: Gen TypeId
 genTypeId = elements [ TInt, TBool ]
 
+genSimpleType :: Gen Type
+genSimpleType = liftM Type genTypeId
+
+genUnaryFunctionType :: Gen Type
+genUnaryFunctionType = liftM2 (:->) genSimpleType genSimpleType
+
 genType :: Gen Type
-genType = oneof
-  [ liftM Type genTypeId
-  , liftM2 (:->) genType genType
-  ]
+genType = sized genTypeN
+  where genTypeN 0 = genSimpleType
+        genTypeN n = liftM2 (:->) (genTypeN (n `div` 2))
+                                  (genTypeN (n `div` 2))
 
 genParam :: Gen Param
 genParam = liftM2 Param genVarname genType
+
+genParamWithType :: Gen Type -> Gen Param
+genParamWithType genT = do
+  typ <- genT
+  vname <- genVarname
+  return $ Param vname typ
 
 genTermVar,
   genTermLambda,
@@ -29,6 +42,8 @@ genTermVar,
 
 genTermVar    = liftM Var genVarname
 genTermLambda = liftM2 Λ arbitrary arbitrary
+genFnAB       = liftM2 Λ (genParamWithType genUnaryFunctionType) arbitrary
+genUnaryFunction = liftM2 Λ (genParamWithType genSimpleType) arbitrary
 genTermApp    = liftM2 (:@) arbitrary arbitrary
 genTermInt    = liftM VInt arbitrary
 genTermBool   = liftM VBool arbitrary
@@ -53,15 +68,16 @@ prop_evalIntIdentity term = property $
 
 prop_WellTypedCanBeEvaluated :: Term -> Property
 prop_WellTypedCanBeEvaluated term =
-  (isWellTyped term) ==> isWellTyped (eval term)
+  printTestCase "well-typed expressions can be evaluated." $
+    (isWellTyped term) ==> isWellTyped (eval term)
 
-prop_dontEvalLambdas :: Term -> Property
-prop_dontEvalLambdas term = forAll genTermLambda $
-  \term -> eval term == term
+prop_dontEvalLambdas :: Property
+prop_dontEvalLambdas =
+  printTestCase "lambda abstractions are not evaluated." $
+    forAll genTermLambda $
+      \term -> eval term == term
 
 main = do
-   mapM quickCheck
-    [ prop_evalIntIdentity
-    , prop_WellTypedCanBeEvaluated
-    , prop_dontEvalLambdas
-    ]
+  quickCheck prop_evalIntIdentity
+  quickCheck prop_WellTypedCanBeEvaluated
+  quickCheck prop_dontEvalLambdas
