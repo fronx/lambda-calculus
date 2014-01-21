@@ -86,8 +86,8 @@ properties = testGroup "simply typed lambda calculus: properties" $
 
 testOverloadedParameter :: Assertion
 testOverloadedParameter =
-  Λ x (Var "x") @=?
-    apply f (VInt 1)
+  (VInt 2) @=?
+    (eval $ f :@ (VInt 1) :@ (VInt 2))
   where x = Param "x" (Type TInt)
         f = Λ x (Λ x (Var "x"))
 
