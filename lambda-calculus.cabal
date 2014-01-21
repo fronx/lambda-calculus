@@ -47,3 +47,7 @@ test-suite UntypedTest
   build-depends:
       base == 4.6.*
     , QuickCheck == 2.5.*
+    , HUnit
+    , test-framework
+    , test-framework-hunit
+    , test-framework-quickcheck2

@@ -1,8 +1,10 @@
 module Main where
 
 import Untyped hiding (main)
-import Test.QuickCheck
 import Control.Monad (liftM, liftM2)
+import Test.QuickCheck
+import Test.Framework (defaultMain, testGroup, Test)
+import Test.Framework.Providers.QuickCheck2 (testProperty)
 
 singleCharStrings chars =
   (concat . map (\c -> [[c]])) chars
@@ -48,9 +50,15 @@ prop_dontEvalLambdas :: Term -> Property
 prop_dontEvalLambdas term = forAll genTermLambda $
   \term -> eval term == term
 
-main = do
-  mapM quickCheck -- verboseCheck
-    [ prop_evalIdentity
-    , prop_evalConstant
-    , prop_dontEvalLambdas
-    ]
+properties :: Test
+properties = testGroup "untyped lambda calculus: properties" $
+  [ testProperty "identity function returns its argument"
+                 prop_evalIdentity
+  , testProperty "constant function returns its body"
+                 prop_evalConstant
+  , testProperty "lambda abstractions are not evaluated"
+                 prop_dontEvalLambdas
+  ]
+
+main :: IO ()
+main = defaultMain [properties]

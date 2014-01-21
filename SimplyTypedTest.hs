@@ -78,7 +78,7 @@ properties = testGroup "simply typed lambda calculus: properties" $
                  prop_WellTypedCanBeEvaluated
   , testProperty "lambda abstractions are not evaluated"
                  prop_dontEvalLambdas
-  , testProperty "identity function (for integers) returns argument"
+  , testProperty "identity function (for integers) returns its argument"
                  prop_evalIntIdentity
   ]
 
