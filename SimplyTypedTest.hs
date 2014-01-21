@@ -5,7 +5,7 @@ import Types
 import Typing
 import Control.Monad (liftM, liftM2)
 import Test.QuickCheck
-import Test.HUnit (Assertion, (@=?))
+import Test.HUnit (Assertion, (@?=))
 import Test.Framework (defaultMain, testGroup, Test)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.Framework.Providers.HUnit (testCase)
@@ -86,15 +86,15 @@ properties = testGroup "simply typed lambda calculus: properties" $
 
 testOverloadedParameter :: Assertion
 testOverloadedParameter =
-  (VInt 2) @=?
-    (eval $ f :@ (VInt 1) :@ (VInt 2))
+  (eval $ f :@ (VInt 1) :@ (VInt 2)) @?=
+    (VInt 2)
   where x = Param "x" (Type TInt)
         f = Λ x (Λ x (Var "x"))
 
 testApply :: Assertion
 testApply =
-  Λ y (VInt 1) @=?
-    apply f (VInt 1)
+  apply f (VInt 1) @?=
+    Λ y (VInt 1)
   where x = Param "x" (Type TInt)
         y = Param "y" (Type TInt)
         f = Λ x (Λ y (Var "x"))
