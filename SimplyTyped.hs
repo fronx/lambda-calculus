@@ -19,7 +19,7 @@ replace p arg (t1 :@ t2) = (replace p arg t1) :@ (replace p arg t2)
 replace p arg t = t
 
 apply :: Term -> Term -> Term
-apply (Λ (Param pname ptype) body) arg =
+apply (Λ (Param pname _) body) arg =
   replace pname arg body
 apply (t1 :@ t2) t3 =
   apply (apply t1 t2) t3
