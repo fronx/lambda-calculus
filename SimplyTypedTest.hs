@@ -1,10 +1,10 @@
-module SimplyTypedTest where
+module Main where
 
 import SimplyTyped hiding (main)
 import Types
 import Typing
-import Test.QuickCheck
 import Control.Monad (liftM, liftM2)
+import Test.QuickCheck
 
 singleCharStrings chars =
   (concat . map (\c -> [[c]])) chars
@@ -17,9 +17,6 @@ genTypeId = elements [ TInt, TBool ]
 
 genSimpleType :: Gen Type
 genSimpleType = liftM Type genTypeId
-
-genUnaryFunctionType :: Gen Type
-genUnaryFunctionType = liftM2 (:->) genSimpleType genSimpleType
 
 genType :: Gen Type
 genType = sized genTypeN
@@ -42,7 +39,6 @@ genTermVar,
 
 genTermVar    = liftM Var genVarname
 genTermLambda = liftM2 Λ arbitrary arbitrary
-genFnAB       = liftM2 Λ (genParamWithType genUnaryFunctionType) arbitrary
 genUnaryFunction = liftM2 Λ (genParamWithType genSimpleType) arbitrary
 genTermApp    = liftM2 (:@) arbitrary arbitrary
 genTermInt    = liftM VInt arbitrary

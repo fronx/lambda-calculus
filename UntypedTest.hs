@@ -1,4 +1,4 @@
-module UntypedTest where
+module Main where
 
 import Untyped hiding (main)
 import Test.QuickCheck
