@@ -5,8 +5,10 @@ import Types
 import Typing
 import Control.Monad (liftM, liftM2)
 import Test.QuickCheck
+import Test.HUnit (Assertion, (@=?))
 import Test.Framework (defaultMain, testGroup, Test)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
+import Test.Framework.Providers.HUnit (testCase)
 
 singleCharStrings chars =
   (concat . map (\c -> [[c]])) chars
@@ -82,8 +84,28 @@ properties = testGroup "simply typed lambda calculus: properties" $
                  prop_evalIntIdentity
   ]
 
+testOverloadedParameter :: Assertion
+testOverloadedParameter =
+  Λ x (Var "x") @=?
+    apply f (VInt 1)
+  where x = Param "x" (Type TInt)
+        f = Λ x (Λ x (Var "x"))
+
+testApply :: Assertion
+testApply =
+  Λ y (VInt 1) @=?
+    apply f (VInt 1)
+  where x = Param "x" (Type TInt)
+        y = Param "y" (Type TInt)
+        f = Λ x (Λ y (Var "x"))
+
 examples :: Test
-examples = testGroup "simply typed lambda calculus: examples" []
+examples = testGroup "simply typed lambda calculus: examples" $
+  [ testCase "beta reduction with overloaded parameter"
+             testOverloadedParameter
+  , testCase "beta reduction, simple case"
+             testApply
+  ]
 
 main :: IO ()
 main = defaultMain [properties, examples]
