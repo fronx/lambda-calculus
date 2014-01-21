@@ -61,13 +61,12 @@ emptyContext :: Context
 emptyContext = Context []
 
 contextPush :: Context -> (Term, Type) -> Context
-contextPush (TypeErrorContext items) (term, typ) =
-  TypeErrorContext $ nub ((term, typ) : items)
-contextPush (Context items) (term, TypeError terror) =
-  TypeErrorContext $ nub ((term, typ) : items)
-  where typ = TypeError terror
-contextPush (Context items) (term, typ) =
-  Context $ nub ((term, typ) : items)
+contextPush (TypeErrorContext items) tt =
+  TypeErrorContext $ nub (tt : items)
+contextPush (Context items) tt
+  | (term, TypeError terror) <- tt
+  = TypeErrorContext $ nub (tt : items)
+  | otherwise = Context $ nub (tt : items)
 
 isTypeError :: (Term, Type) -> Bool
 isTypeError (_, TypeError te) = True
