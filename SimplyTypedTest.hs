@@ -5,6 +5,8 @@ import Types
 import Typing
 import Control.Monad (liftM, liftM2)
 import Test.QuickCheck
+import Test.Framework (defaultMain, testGroup, Test)
+import Test.Framework.Providers.QuickCheck2 (testProperty)
 
 singleCharStrings chars =
   (concat . map (\c -> [[c]])) chars
@@ -64,16 +66,24 @@ prop_evalIntIdentity term = property $
 
 prop_WellTypedCanBeEvaluated :: Term -> Property
 prop_WellTypedCanBeEvaluated term =
-  printTestCase "well-typed expressions can be evaluated." $
-    (isWellTyped term) ==> isWellTyped (eval term)
+  (isWellTyped term) ==> isWellTyped (eval term)
 
 prop_dontEvalLambdas :: Property
-prop_dontEvalLambdas =
-  printTestCase "lambda abstractions are not evaluated." $
-    forAll genTermLambda $
-      \term -> eval term == term
+prop_dontEvalLambdas = forAll genTermLambda $
+  \term -> eval term == term
 
-main = do
-  quickCheck prop_evalIntIdentity
-  quickCheck prop_WellTypedCanBeEvaluated
-  quickCheck prop_dontEvalLambdas
+properties :: Test
+properties = testGroup "simply typed lambda calculus: properties" $
+  [ testProperty "well-typed expressions can be evaluated"
+                 prop_WellTypedCanBeEvaluated
+  , testProperty "lambda abstractions are not evaluated"
+                 prop_dontEvalLambdas
+  , testProperty "identity function (for integers) returns argument"
+                 prop_evalIntIdentity
+  ]
+
+examples :: Test
+examples = testGroup "simply typed lambda calculus: examples" []
+
+main :: IO ()
+main = defaultMain [properties, examples]
