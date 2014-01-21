@@ -17,8 +17,11 @@ replace a b (t1 :@ t2) = (replace a b t1) :@ (replace a b t2)
 replace a b t = t
 
 apply :: Term -> Term -> Term
-apply (Λ (Param pname ptype) body) term =
-  replace (Var pname) term body
+apply (Λ (Param pname ptype) body) term
+  | Λ (Param pname' ptype') body' <- body
+  , pname == pname'
+  = body
+  | otherwise = replace (Var pname) term body
 apply (t1 :@ t2) t3 =
   apply (apply t1 t2) t3
 apply a b = error $ "Can't apply " ++ (show a) ++ " to " ++ (show b)
