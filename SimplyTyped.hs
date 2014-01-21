@@ -3,25 +3,24 @@ module SimplyTyped where
 import Types
 import Typing
 
-replace :: Term -- old
+replace :: VarName
         -> Term -- new
         -> Term -- term
         -> Term -- result
-replace a b (Var x)
-  | a == (Var x) = b
-  | otherwise    = Var x
-replace a b (Λ param term)
-  | a == term = Λ param b
-  | otherwise = Λ param (replace a b term)
-replace a b (t1 :@ t2) = (replace a b t1) :@ (replace a b t2)
-replace a b t = t
+replace p arg (Var x)
+  | p == x    = arg
+  | otherwise = Var x
+replace p arg (Λ param term)
+  | Param p' _ <- param
+  , p == p'
+  = Λ param term
+  | otherwise = Λ param (replace p arg term)
+replace p arg (t1 :@ t2) = (replace p arg t1) :@ (replace p arg t2)
+replace p arg t = t
 
 apply :: Term -> Term -> Term
-apply (Λ (Param pname ptype) body) term
-  | Λ (Param pname' ptype') body' <- body
-  , pname == pname'
-  = body
-  | otherwise = replace (Var pname) term body
+apply (Λ (Param pname ptype) body) arg =
+  replace pname arg body
 apply (t1 :@ t2) t3 =
   apply (apply t1 t2) t3
 apply a b = error $ "Can't apply " ++ (show a) ++ " to " ++ (show b)
@@ -80,7 +79,7 @@ main = do
                (Λ (Param "x" int)
                  ((Var "f") :@ ((Var "f") :@ (Var "x"))))
 
-  mapM runWithContext
+  mapM_ runWithContext
     [ ( 1, Var "x") -- error: x hasn't been declared
     , ( 2, intIdentity)
     , ( 3, Λ (Param "y" int) (intIdentity :@ (Var "y")))

@@ -91,6 +91,14 @@ testOverloadedParameter =
   where x = Param "x" (Type TInt)
         f = Λ x (Λ x (Var "x"))
 
+testOverloadedParameter' :: Assertion
+testOverloadedParameter' =
+  (eval $ f :@ (VInt 1) :@ (VInt 2) :@ (VInt 3)) @?=
+    (VInt 3)
+  where x = Param "x" (Type TInt)
+        y = Param "y" (Type TInt)
+        f = Λ x (Λ y (Λ x (Var "x")))
+
 testApply :: Assertion
 testApply =
   apply f (VInt 1) @?=
@@ -103,6 +111,8 @@ examples :: Test
 examples = testGroup "simply typed lambda calculus: examples" $
   [ testCase "beta reduction with overloaded parameter"
              testOverloadedParameter
+  , testCase "beta reduction with overloaded parameter (2)"
+             testOverloadedParameter'
   , testCase "beta reduction, simple case"
              testApply
   ]
