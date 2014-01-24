@@ -1,10 +1,13 @@
 module Main where
 
 import Untyped hiding (main)
+import UntypedLib
 import Control.Monad (liftM, liftM2)
 import Test.QuickCheck
+import Test.HUnit (Assertion, (@?=))
 import Test.Framework (defaultMain, testGroup, Test)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
+import Test.Framework.Providers.HUnit (testCase)
 
 singleCharStrings chars =
   (concat . map (\c -> [[c]])) chars
@@ -60,5 +63,32 @@ properties = testGroup "untyped lambda calculus: properties" $
                  prop_dontEvalLambdas
   ]
 
+testListHead :: Assertion
+testListHead =
+  (eval (lhead :@ (cons :@ (Atom 3) :@ (Atom 0)))) @?=
+    (Atom 3)
+
+testListTail :: Assertion
+testListTail =
+  (eval (ltail :@ (cons :@ (Atom 3) :@ (Atom 0)))) @?=
+    (Atom 0)
+
+testListTail' :: Assertion
+testListTail' =
+  (eval (ltail :@ (cons :@ (Atom 3) :@ (cons :@ (Atom 2) :@ (Atom 0))))) @?=
+    (eval (cons :@ (Atom 2) :@ (Atom 0)))
+
+--Λ (Param "f") (
+--  (Λ (Param "a") (
+--    Λ (Param "b") (Atom 0)
+--  ) :@ Atom 2) :@ Atom 0)
+
+examples :: Test
+examples = testGroup "untyped lambda calculus: examples" $
+  [ testCase "list ops: head" testListHead
+  , testCase "list ops: tail (return one item)"  testListTail
+  , testCase "list ops: tail (return two items)" testListTail'
+  ]
+
 main :: IO ()
-main = defaultMain [properties]
+main = defaultMain [properties, examples]

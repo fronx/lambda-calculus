@@ -5,6 +5,7 @@ import Data.List (intercalate, nub)
 type VarName  = String
 data TypeId = TInt
             | TBool
+            | TList TypeId
             deriving (Show, Eq)
 
 data Error = Error String
@@ -51,11 +52,13 @@ data Term = Var VarName
           | Term :@ Term
           | VInt Int
           | VBool Bool
+          | VNilInt
           deriving (Show, Eq)
 
 -- TODO use a map instead
 data Context = Context [ (Term, Type) ]
              | TypeErrorContext [ (Term, Type) ]
+             deriving Eq
 
 emptyContext :: Context
 emptyContext = Context []

@@ -20,6 +20,7 @@ doType :: Context -> Term -> Context
 doType context term
   | VInt  _ <- term = contextPush context (term, Type TInt)
   | VBool _ <- term = contextPush context (term, Type TBool)
+  | VNilInt <- term = contextPush context (term, Type (TList TInt))
   | Var   _ <- term = contextPush context (term, lookupTypeOrTypeError term context)
   | Λ (Param pname ptype) body <- term
     = let typ = case lookupType' body context'' of

@@ -1,4 +1,14 @@
-module SimplyTyped where
+module SimplyTyped
+  ( replace
+  , apply
+  , evalSmallStep
+  , eval
+  , run
+  , runWithContext
+  , module Types
+  , module Typing
+  )
+where
 
 import Types
 import Typing
@@ -31,7 +41,7 @@ evalSmallStep t = t
 
 eval :: Term -> Term
 eval t = case evalSmallStep t of
-  (t1' :@ t2') -> evalSmallStep (t1' :@ t2')
+  (t1' :@ t2') -> eval (t1' :@ t2')
   t -> t
 
 run :: Term -> (Context, Term)
@@ -56,38 +66,16 @@ runWithContext (lineId, term) =
       ++ "\n" ++
       (show context)
 
-------- LIB -------
-int = Type TInt
-
-intIdentity = Λ (Param "x" int) (Var "x")
-intConstant = Λ (Param "x" int) (Var "y")
-
-intCons = Λ (Param "a" int)
-           (Λ (Param "b" int)
-             (Λ (Param "f" (int :-> int :-> int))
-               ((Var "f") :@ (Var "a") :@ (Var "b"))))
-
-intFirst  = Λ (Param "a" int) (Λ (Param "b" int) (Var "a"))
-intSecond = Λ (Param "a" int) (Λ (Param "b" int) (Var "b"))
-
-intHead = Λ (Param "c" ((int :-> int :-> int) :-> int)) (Var "c" :@ intFirst)
-intTail = Λ (Param "c" ((int :-> int :-> int) :-> int)) (Var "c" :@ intSecond)
-------- /LIB -------
-
 main = do
-  let fnfn = Λ (Param "f" (int :-> int))
-               (Λ (Param "x" int)
-                 ((Var "f") :@ ((Var "f") :@ (Var "x"))))
-
-  mapM_ runWithContext
-    [ ( 1, Var "x") -- error: x hasn't been declared
-    , ( 2, intIdentity)
-    , ( 3, Λ (Param "y" int) (intIdentity :@ (Var "y")))
-    , ( 4, intConstant)
-    , ( 5, fnfn)
-    , ( 6, fnfn :@ (Var "a")) -- error
-    , ( 7, fnfn :@ (Λ (Param "a" (Type TBool)) (Var "a"))) -- error
-    , ( 8, intIdentity :@ (VInt 4))
-    , ( 9, fnfn :@ (Λ (Param "a" int) (Var "a")))
-    , (10, intHead :@ (intCons :@ (VInt 3) :@ (VInt 2)))
-    ]
+  undefined
+  --mapM_ runWithContext
+  --  [ ( 1, Var "x") -- error: x hasn't been declared
+  --  , ( 2, intIdentity)
+  --  , ( 3, Λ (Param "y" int) (intIdentity :@ (Var "y")))
+  --  , ( 4, intConstant)
+  --  , ( 5, fnfn)
+  --  , ( 6, fnfn :@ (Var "a")) -- error
+  --  , ( 7, fnfn :@ (Λ (Param "a" (Type TBool)) (Var "a"))) -- error
+  --  , ( 8, intIdentity :@ (VInt 4))
+  --  , (10, intHead :@ (intCons :@ (VInt 3) :@ (VInt 2)))
+  --  ]

@@ -1,6 +1,7 @@
 module Main where
 
 import SimplyTyped hiding (main)
+import SimplyTypedLib
 import Types
 import Typing
 import Control.Monad (liftM, liftM2)
@@ -106,6 +107,12 @@ testApply =
   where x = Param "x" (Type TInt)
         y = Param "y" (Type TInt)
         f = Λ x (Λ y (Var "x"))
+
+  --  , ( 9, fnfn :@ (Λ (Param "a" int) (Var "a")))
+
+  --let fnfn = Λ (Param "f" (int :-> int))
+  --             (Λ (Param "x" int)
+  --               ((Var "f") :@ ((Var "f") :@ (Var "x"))))
 
 examples :: Test
 examples = testGroup "simply typed lambda calculus: examples" $
