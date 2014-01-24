@@ -78,6 +78,11 @@ testListTail' =
   (eval (ltail :@ (cons :@ (Atom 3) :@ (cons :@ (Atom 2) :@ (Atom 0))))) @?=
     (eval (cons :@ (Atom 2) :@ (Atom 0)))
 
+testListTail'' :: Assertion
+testListTail'' =
+  (eval (ltail :@ (ltail :@ (cons :@ (Atom 3) :@ (cons :@ (Atom 2) :@ (Atom 0)))))) @?=
+    (Atom 0)
+
 --Λ (Param "f") (
 --  (Λ (Param "a") (
 --    Λ (Param "b") (Atom 0)
@@ -88,6 +93,7 @@ examples = testGroup "untyped lambda calculus: examples" $
   [ testCase "list ops: head" testListHead
   , testCase "list ops: tail (return one item)"  testListTail
   , testCase "list ops: tail (return two items)" testListTail'
+  , testCase "list ops: tail twice"              testListTail''
   ]
 
 main :: IO ()

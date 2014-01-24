@@ -49,19 +49,3 @@ eval t = case evalSmallStep t of
 
 run :: (Int, Term) -> IO ()
 run (n, t) = putStrLn $ (show n) ++ ": " ++ (show (eval t))
-
-main = do
-  undefined
-  --mapM run
-  --  [ ( 1, identity)              -- shouldn't change anything
-  --  , ( 2, identity :@ (Var "a")) -- Var "a"
-  --  , ( 3, constant :@ (Var "a")) -- Var "y"
-  --  , ( 4, identity :@ constant)  -- constant
-  --  , ( 5, fnfn :@ (Var "a"))     -- the result of this is meaningless
-  --  , ( 6, Λ (Param "y") (identity :@ (Var "y")))
-  --  , ( 7, fnfn)
-  --  , ( 8, identity :@ (Atom 1))
-  --  , ( 9, (second :@ (Atom 5)) :@ (Atom 6))
-  --  , (10, (first  :@ (Atom 5)) :@ (Atom 6))
-  --  , (11, head :@ (cons :@ (Atom 3) :@ (Atom 2)))
-  --  ]
